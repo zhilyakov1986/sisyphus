@@ -1,4 +1,4 @@
-import { Mesh, MeshBuilder, Scene, Vector3, StandardMaterial, Color3, ParticleSystem, Texture } from "babylonjs";
+import { Mesh, MeshBuilder, Scene, Vector3, StandardMaterial, Color3, ParticleSystem, Texture, TransformNode } from "babylonjs";
 import { InputManager } from "../systems/InputManager";
 
 export class Player {
@@ -10,8 +10,16 @@ export class Player {
     // Humanoid Parts
     private _head!: Mesh;
     private _body!: Mesh;
+
+    // Arms (Joints + Meshes)
+    private _leftArmJoint!: TransformNode;
+    private _rightArmJoint!: TransformNode;
     private _leftArm!: Mesh;
     private _rightArm!: Mesh;
+
+    // Legs (Joints + Meshes)
+    private _leftLegJoint!: TransformNode;
+    private _rightLegJoint!: TransformNode;
     private _leftLeg!: Mesh;
     private _rightLeg!: Mesh;
 
@@ -194,63 +202,70 @@ export class Player {
         belt.material = leatherMat;
 
         // --- ARMS ---
-        // Shoulders (Deltoids)
-        const leftShoulder = MeshBuilder.CreateSphere("leftShoulder", { diameter: 0.35, segments: 12 }, this._scene);
+        // Shoulders (Deltoids) - Increased size slightly
+        const leftShoulder = MeshBuilder.CreateSphere("leftShoulder", { diameter: 0.4, segments: 12 }, this._scene);
         leftShoulder.parent = this.mesh;
-        leftShoulder.position = new Vector3(-0.45, 0.25, 0); // Lowered from 0.35
+        leftShoulder.position = new Vector3(-0.45, 0.25, 0);
         leftShoulder.material = skinMat;
 
-        const rightShoulder = MeshBuilder.CreateSphere("rightShoulder", { diameter: 0.35, segments: 12 }, this._scene);
+        const rightShoulder = MeshBuilder.CreateSphere("rightShoulder", { diameter: 0.4, segments: 12 }, this._scene);
         rightShoulder.parent = this.mesh;
-        rightShoulder.position = new Vector3(0.45, 0.25, 0); // Lowered from 0.35
+        rightShoulder.position = new Vector3(0.45, 0.25, 0);
         rightShoulder.material = skinMat;
 
-        this._leftArm = MeshBuilder.CreateCylinder("leftArm", { height: 0.6, diameter: 0.22, tessellation: 12 }, this._scene);
-        this._leftArm.parent = this.mesh;
-        this._leftArm.setPivotPoint(new Vector3(0, 0.25, 0));
-        this._leftArm.position.x = -0.55;
-        this._leftArm.position.y = 0.1; // Lowered from 0.2
+        // Left Arm Joint (Pivot at shoulder center)
+        this._leftArmJoint = new TransformNode("leftArmJoint", this._scene);
+        this._leftArmJoint.parent = this.mesh;
+        this._leftArmJoint.position = new Vector3(-0.45, 0.25, 0); // Exactly at shoulder
+
+        // Left Arm Mesh (Tapered)
+        this._leftArm = MeshBuilder.CreateCylinder("leftArm", { height: 0.6, diameterTop: 0.28, diameterBottom: 0.15, tessellation: 12 }, this._scene);
+        this._leftArm.parent = this._leftArmJoint;
+        this._leftArm.position.y = -0.3; // Hang down from joint
         this._leftArm.material = skinMat;
 
-        const leftArmCap = MeshBuilder.CreateSphere("leftArmCap", { diameter: 0.22, segments: 8 }, this._scene);
-        leftArmCap.parent = this._leftArm;
-        leftArmCap.position.y = 0.3; // Top of cylinder
-        leftArmCap.material = skinMat;
-
-        const leftHand = MeshBuilder.CreateSphere("leftHand", { diameter: 0.25, segments: 8 }, this._scene);
+        const leftHand = MeshBuilder.CreateSphere("leftHand", { diameter: 0.2, segments: 8 }, this._scene);
         leftHand.parent = this._leftArm;
-        leftHand.position.y = -0.3;
+        leftHand.position.y = -0.3; // At bottom of arm
         leftHand.material = skinMat;
 
-        this._rightArm = MeshBuilder.CreateCylinder("rightArm", { height: 0.6, diameter: 0.22, tessellation: 12 }, this._scene);
-        this._rightArm.parent = this.mesh;
-        this._rightArm.setPivotPoint(new Vector3(0, 0.25, 0));
-        this._rightArm.position.x = 0.55;
-        this._rightArm.position.y = 0.1; // Lowered from 0.2
+        // Right Arm Joint
+        this._rightArmJoint = new TransformNode("rightArmJoint", this._scene);
+        this._rightArmJoint.parent = this.mesh;
+        this._rightArmJoint.position = new Vector3(0.45, 0.25, 0);
+
+        // Right Arm Mesh (Tapered)
+        this._rightArm = MeshBuilder.CreateCylinder("rightArm", { height: 0.6, diameterTop: 0.28, diameterBottom: 0.15, tessellation: 12 }, this._scene);
+        this._rightArm.parent = this._rightArmJoint;
+        this._rightArm.position.y = -0.3;
         this._rightArm.material = skinMat;
 
-        const rightArmCap = MeshBuilder.CreateSphere("rightArmCap", { diameter: 0.22, segments: 8 }, this._scene);
-        rightArmCap.parent = this._rightArm;
-        rightArmCap.position.y = 0.3; // Top of cylinder
-        rightArmCap.material = skinMat;
-
-        const rightHand = MeshBuilder.CreateSphere("rightHand", { diameter: 0.25, segments: 8 }, this._scene);
+        const rightHand = MeshBuilder.CreateSphere("rightHand", { diameter: 0.2, segments: 8 }, this._scene);
         rightHand.parent = this._rightArm;
         rightHand.position.y = -0.3;
         rightHand.material = skinMat;
 
         // --- LEGS ---
-        this._leftLeg = MeshBuilder.CreateCylinder("leftLeg", { height: 0.6, diameter: 0.28, tessellation: 12 }, this._scene);
-        this._leftLeg.parent = this.mesh;
-        this._leftLeg.setPivotPoint(new Vector3(0, 0.3, 0));
-        this._leftLeg.position.x = -0.25;
-        this._leftLeg.position.y = -0.6;
+        // Hip Joints (Hidden inside body/tunic, but pivotal)
+        this._leftLegJoint = new TransformNode("leftLegJoint", this._scene);
+        this._leftLegJoint.parent = this.mesh;
+        this._leftLegJoint.position = new Vector3(-0.25, -0.3, 0); // Hip position
+
+        this._leftLeg = MeshBuilder.CreateCylinder("leftLeg", { height: 0.6, diameterTop: 0.32, diameterBottom: 0.18, tessellation: 12 }, this._scene);
+        this._leftLeg.parent = this._leftLegJoint;
+        this._leftLeg.position.y = -0.3; // Hang down
         this._leftLeg.material = skinMat;
+
+        // Rounded Thigh Top (to look like it connects)
+        const leftThighTop = MeshBuilder.CreateSphere("leftThighTop", { diameter: 0.32, segments: 8 }, this._scene);
+        leftThighTop.parent = this._leftLeg;
+        leftThighTop.position.y = 0.3;
+        leftThighTop.material = skinMat;
 
         // Detailed Sandal (Left)
         const leftSandalBase = MeshBuilder.CreateBox("leftSandalBase", { width: 0.26, height: 0.05, depth: 0.45 }, this._scene);
         leftSandalBase.parent = this._leftLeg;
-        leftSandalBase.position = new Vector3(0, -0.3, 0.05);
+        leftSandalBase.position = new Vector3(0, -0.3, 0.05); // Bottom of tapered leg
         leftSandalBase.material = leatherMat;
 
         const leftSandalStrap = MeshBuilder.CreateTorus("leftSandalStrap", { diameter: 0.29, thickness: 0.05, tessellation: 8 }, this._scene);
@@ -258,12 +273,20 @@ export class Player {
         leftSandalStrap.position.y = 0.05; // On top of base
         leftSandalStrap.material = leatherMat;
 
-        this._rightLeg = MeshBuilder.CreateCylinder("rightLeg", { height: 0.6, diameter: 0.28, tessellation: 12 }, this._scene);
-        this._rightLeg.parent = this.mesh;
-        this._rightLeg.setPivotPoint(new Vector3(0, 0.3, 0));
-        this._rightLeg.position.x = 0.25;
-        this._rightLeg.position.y = -0.6;
+        this._rightLegJoint = new TransformNode("rightLegJoint", this._scene);
+        this._rightLegJoint.parent = this.mesh;
+        this._rightLegJoint.position = new Vector3(0.25, -0.3, 0);
+
+        this._rightLeg = MeshBuilder.CreateCylinder("rightLeg", { height: 0.6, diameterTop: 0.32, diameterBottom: 0.18, tessellation: 12 }, this._scene);
+        this._rightLeg.parent = this._rightLegJoint;
+        this._rightLeg.position.y = -0.3;
         this._rightLeg.material = skinMat;
+
+        // Rounded Thigh Top
+        const rightThighTop = MeshBuilder.CreateSphere("rightThighTop", { diameter: 0.32, segments: 8 }, this._scene);
+        rightThighTop.parent = this._rightLeg;
+        rightThighTop.position.y = 0.3;
+        rightThighTop.material = skinMat;
 
         // Detailed Sandal (Right)
         const rightSandalBase = MeshBuilder.CreateBox("rightSandalBase", { width: 0.26, height: 0.05, depth: 0.45 }, this._scene);
@@ -313,19 +336,19 @@ export class Player {
             const armAngle = Math.sin(this._runTime) * 0.8;
             const legAngle = Math.sin(this._runTime) * 1.0;
 
-            this._leftArm.rotation.x = armAngle;
-            this._rightArm.rotation.x = -armAngle;
+            this._leftArmJoint.rotation.x = armAngle;
+            this._rightArmJoint.rotation.x = -armAngle;
 
-            this._leftLeg.rotation.x = -legAngle;
-            this._rightLeg.rotation.x = legAngle;
+            this._leftLegJoint.rotation.x = -legAngle;
+            this._rightLegJoint.rotation.x = legAngle;
 
             if (!this._dustParticles.isStarted()) this._dustParticles.start();
         } else {
             // Jump Pose
-            this._leftArm.rotation.x = -2.5;
-            this._rightArm.rotation.x = -2.5;
-            this._leftLeg.rotation.x = -0.5;
-            this._rightLeg.rotation.x = 0.5;
+            this._leftArmJoint.rotation.x = -2.5;
+            this._rightArmJoint.rotation.x = -2.5;
+            this._leftLegJoint.rotation.x = -0.5;
+            this._rightLegJoint.rotation.x = 0.5;
 
             if (this._dustParticles.isStarted()) this._dustParticles.stop();
         }

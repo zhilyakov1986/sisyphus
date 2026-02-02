@@ -10,7 +10,6 @@ export class ObstacleManager {
     private _activePowerups: Powerup[] = [];
 
     private _spawnTimer: number = 0;
-    private _spawnInterval: number = 2.0;
     private _gameSpeed: number;
 
     // Pools
@@ -77,14 +76,18 @@ export class ObstacleManager {
 
     public update(deltaTime: number, player: Player, onObstacleHit: () => void, speedMultiplier: number): void {
         this._spawnTimer += deltaTime;
-        const currentInterval = this._spawnInterval / speedMultiplier;
+        const currentSpeed = this._gameSpeed * speedMultiplier;
 
-        if (this._spawnTimer >= currentInterval) {
+        // Distance Based Spawning
+        // Target Distance: 40 units between obstacles
+        // Interval (seconds) = Distance / Speed
+        const baseDistance = 40;
+        const spawnInterval = baseDistance / currentSpeed;
+
+        if (this._spawnTimer >= spawnInterval) {
             this._spawnObject();
             this._spawnTimer = 0;
         }
-
-        const currentSpeed = this._gameSpeed * speedMultiplier;
 
         // Update Obstacles
         for (let i = this._activeObstacles.length - 1; i >= 0; i--) {
