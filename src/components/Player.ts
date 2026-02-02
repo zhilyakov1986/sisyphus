@@ -7,6 +7,17 @@ export class Player {
     private _input: InputManager;
     private _dustParticles!: ParticleSystem;
 
+    // Humanoid Parts
+    private _head!: Mesh;
+    private _body!: Mesh;
+    private _leftArm!: Mesh;
+    private _rightArm!: Mesh;
+    private _leftLeg!: Mesh;
+    private _rightLeg!: Mesh;
+
+    // Animation
+    private _runTime: number = 0;
+
     // Shield
     private _hasShield: boolean = false;
     private _shieldMesh!: Mesh;
@@ -21,7 +32,7 @@ export class Player {
     private _jumpForce: number = 15;
     private _gravity: number = -80;
     private _verticalVelocity: number = 0;
-    private _groundY: number = 0.5; // Half of player height
+    // If we use pivot at feet (ground level), _groundY should be 0.
 
     constructor(scene: Scene, input: InputManager) {
         this._scene = scene;
@@ -33,8 +44,10 @@ export class Player {
     }
 
     private _createShieldMesh(): void {
-        this._shieldMesh = MeshBuilder.CreateSphere("shieldVisual", { diameter: 1.5 }, this._scene);
-        this._shieldMesh.parent = this.mesh; // Attach to player
+        this._shieldMesh = MeshBuilder.CreateSphere("shieldVisual", { diameter: 2.0 }, this._scene);
+        this._shieldMesh.parent = this.mesh;
+        this._shieldMesh.position.y = 1.0; // Center around body
+        this._shieldMesh.scaling = new Vector3(1, 1.2, 1); // Oval
 
         const mat = new StandardMaterial("shieldMat", this._scene);
         mat.diffuseColor = new Color3(0, 1, 1);
@@ -59,20 +72,75 @@ export class Player {
     }
 
     private _createPlayerMesh(): void {
-        this.mesh = MeshBuilder.CreateSphere("player", { diameter: 1 }, this._scene);
-        this.mesh.position.y = this._groundY;
+        // Parent Mesh (Invisible box for physics/position)
+        // We set pivot at bottom center (0.5 y relative to 1 height box?)
+        this.mesh = MeshBuilder.CreateBox("player", { height: 2, width: 1, depth: 1 }, this._scene);
+        this.mesh.position.y = 1.0; // Box center is at 1.0, so feet are at 0.0
+        this.mesh.isVisible = false;
 
-        const mat = new StandardMaterial("playerMat", this._scene);
-        mat.diffuseColor = new Color3(1, 0.5, 0); // Orange
-        this.mesh.material = mat;
+        // Materials
+        const skinMat = new StandardMaterial("skinMat", this._scene);
+        skinMat.diffuseColor = new Color3(1, 0.8, 0.6); // Peach
+
+        const shirtMat = new StandardMaterial("shirtMat", this._scene);
+        shirtMat.diffuseColor = new Color3(0.2, 0.2, 0.8); // Blue shirt
+
+        const pantsMat = new StandardMaterial("pantsMat", this._scene);
+        pantsMat.diffuseColor = new Color3(0.1, 0.1, 0.1); // Dark grey pants
+
+        // Head
+        this._head = MeshBuilder.CreateBox("head", { size: 0.4 }, this._scene);
+        this._head.parent = this.mesh;
+        this._head.position.y = 0.7; // Relative to 0.0 center of 2.0 height box? No, relative to parent center.
+        // Parent is Box height 2. Center is 0. Feet -1. Head +1.
+        // Let's refine relative positions.
+        // If parent center is (0,0,0), then Top is +1.
+        this._head.position.y = 0.8;
+        this._head.material = skinMat;
+
+        // Body
+        this._body = MeshBuilder.CreateBox("body", { width: 0.5, height: 0.7, depth: 0.3 }, this._scene);
+        this._body.parent = this.mesh;
+        this._body.position.y = 0.2;
+        this._body.material = shirtMat;
+
+        // Arms
+        this._leftArm = MeshBuilder.CreateBox("leftArm", { width: 0.15, height: 0.6, depth: 0.15 }, this._scene);
+        this._leftArm.parent = this.mesh;
+        this._leftArm.setPivotPoint(new Vector3(0, 0.25, 0)); // Pivot near shoulder
+        this._leftArm.position.x = -0.35;
+        this._leftArm.position.y = 0.2;
+        this._leftArm.material = skinMat;
+
+        this._rightArm = MeshBuilder.CreateBox("rightArm", { width: 0.15, height: 0.6, depth: 0.15 }, this._scene);
+        this._rightArm.parent = this.mesh;
+        this._rightArm.setPivotPoint(new Vector3(0, 0.25, 0));
+        this._rightArm.position.x = 0.35;
+        this._rightArm.position.y = 0.2;
+        this._rightArm.material = skinMat;
+
+        // Legs
+        this._leftLeg = MeshBuilder.CreateBox("leftLeg", { width: 0.18, height: 0.7, depth: 0.2 }, this._scene);
+        this._leftLeg.parent = this.mesh;
+        this._leftLeg.setPivotPoint(new Vector3(0, 0.3, 0)); // Pivot near hip
+        this._leftLeg.position.x = -0.15;
+        this._leftLeg.position.y = -0.55;
+        this._leftLeg.material = pantsMat;
+
+        this._rightLeg = MeshBuilder.CreateBox("rightLeg", { width: 0.18, height: 0.7, depth: 0.2 }, this._scene);
+        this._rightLeg.parent = this.mesh;
+        this._rightLeg.setPivotPoint(new Vector3(0, 0.3, 0));
+        this._rightLeg.position.x = 0.15;
+        this._rightLeg.position.y = -0.55;
+        this._rightLeg.material = pantsMat;
     }
 
     private _createDustParticles(): void {
         this._dustParticles = new ParticleSystem("dust", 100, this._scene);
         this._dustParticles.particleTexture = new Texture("https://www.babylonjs-playground.com/textures/flare.png", this._scene);
         this._dustParticles.emitter = this.mesh;
-        this._dustParticles.minEmitBox = new Vector3(-0.5, -0.5, -0.5);
-        this._dustParticles.maxEmitBox = new Vector3(0.5, -0.5, 0.5);
+        this._dustParticles.minEmitBox = new Vector3(-0.5, -1.0, -0.5); // Emit from feet (bottom of box)
+        this._dustParticles.maxEmitBox = new Vector3(0.5, -1.0, 0.5);
         this._dustParticles.color1 = new Color3(0.5, 0.5, 0.5).toColor4();
         this._dustParticles.color2 = new Color3(0.2, 0.2, 0.2).toColor4();
         this._dustParticles.colorDead = new Color3(0, 0, 0).toColor4(0);
@@ -82,7 +150,7 @@ export class Player {
         this._dustParticles.maxLifeTime = 1.0;
         this._dustParticles.emitRate = 50;
         this._dustParticles.blendMode = ParticleSystem.BLENDMODE_ONEONE;
-        this._dustParticles.gravity = new Vector3(0, 0.5, -10); // "Wind" blowing it back
+        this._dustParticles.gravity = new Vector3(0, 0.5, -10);
         this._dustParticles.direction1 = new Vector3(-1, 2, -5);
         this._dustParticles.direction2 = new Vector3(1, 2, -5);
         this._dustParticles.minEmitPower = 1;
@@ -95,12 +163,28 @@ export class Player {
         this._handleLaneMovement(deltaTime);
         this._handleJump(deltaTime);
 
-        // Bobbing animation
         if (!this._isJumping) {
-            this.mesh.position.y = this._groundY + Math.abs(Math.sin(Date.now() * 0.01) * 0.1);
+            // Run Cycle
+            this._runTime += deltaTime * 15; // Animation speed
+
+            // Simple Sine Wave Animation
+            const armAngle = Math.sin(this._runTime) * 0.8;
+            const legAngle = Math.sin(this._runTime) * 1.0;
+
+            this._leftArm.rotation.x = armAngle;
+            this._rightArm.rotation.x = -armAngle;
+
+            this._leftLeg.rotation.x = -legAngle;
+            this._rightLeg.rotation.x = legAngle;
+
             if (!this._dustParticles.isStarted()) this._dustParticles.start();
         } else {
-            // Stop emitting dust in air
+            // Jump Pose
+            this._leftArm.rotation.x = -2.5;
+            this._rightArm.rotation.x = -2.5;
+            this._leftLeg.rotation.x = -0.5;
+            this._rightLeg.rotation.x = 0.5;
+
             if (this._dustParticles.isStarted()) this._dustParticles.stop();
         }
     }
@@ -134,8 +218,15 @@ export class Player {
             this.mesh.position.y += this._verticalVelocity * deltaTime;
             this._verticalVelocity += this._gravity * deltaTime;
 
-            if (this.mesh.position.y <= this._groundY) {
-                this.mesh.position.y = this._groundY;
+            // Ground is at y = 1.0 (Centre of mesh) ??
+            // Wait, logic check:
+            // _createPlayerMesh sets y = 1.0. 
+            // If we jump, y>1.0.
+            // Gravity pulls down.
+            // If y <= 1.0, Reset.
+
+            if (this.mesh.position.y <= 1.0) {
+                this.mesh.position.y = 1.0;
                 this._isJumping = false;
                 this._verticalVelocity = 0;
             }
