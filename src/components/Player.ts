@@ -197,19 +197,19 @@ export class Player {
         // Shoulders (Deltoids)
         const leftShoulder = MeshBuilder.CreateSphere("leftShoulder", { diameter: 0.35, segments: 12 }, this._scene);
         leftShoulder.parent = this.mesh;
-        leftShoulder.position = new Vector3(-0.45, 0.35, 0); // High on torso
+        leftShoulder.position = new Vector3(-0.45, 0.25, 0); // Lowered from 0.35
         leftShoulder.material = skinMat;
 
         const rightShoulder = MeshBuilder.CreateSphere("rightShoulder", { diameter: 0.35, segments: 12 }, this._scene);
         rightShoulder.parent = this.mesh;
-        rightShoulder.position = new Vector3(0.45, 0.35, 0);
+        rightShoulder.position = new Vector3(0.45, 0.25, 0); // Lowered from 0.35
         rightShoulder.material = skinMat;
 
         this._leftArm = MeshBuilder.CreateCylinder("leftArm", { height: 0.6, diameter: 0.22, tessellation: 12 }, this._scene);
         this._leftArm.parent = this.mesh;
         this._leftArm.setPivotPoint(new Vector3(0, 0.25, 0));
         this._leftArm.position.x = -0.55;
-        this._leftArm.position.y = 0.2;
+        this._leftArm.position.y = 0.1; // Lowered from 0.2
         this._leftArm.material = skinMat;
 
         const leftArmCap = MeshBuilder.CreateSphere("leftArmCap", { diameter: 0.22, segments: 8 }, this._scene);
@@ -226,7 +226,7 @@ export class Player {
         this._rightArm.parent = this.mesh;
         this._rightArm.setPivotPoint(new Vector3(0, 0.25, 0));
         this._rightArm.position.x = 0.55;
-        this._rightArm.position.y = 0.2;
+        this._rightArm.position.y = 0.1; // Lowered from 0.2
         this._rightArm.material = skinMat;
 
         const rightArmCap = MeshBuilder.CreateSphere("rightArmCap", { diameter: 0.22, segments: 8 }, this._scene);
