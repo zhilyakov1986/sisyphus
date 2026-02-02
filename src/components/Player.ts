@@ -84,8 +84,14 @@ export class Player {
         const tunicMat = new StandardMaterial("tunicMat", this._scene);
         tunicMat.diffuseColor = new Color3(0.95, 0.95, 0.9); // White/Cream Tunic
 
+        const sashMat = new StandardMaterial("sashMat", this._scene);
+        sashMat.diffuseColor = new Color3(0.8, 0.2, 0.2); // Royal Red Sash
+
         const hairMat = new StandardMaterial("hairMat", this._scene);
         hairMat.diffuseColor = new Color3(0.3, 0.2, 0.1); // Dark Brown Hair/Beard
+
+        const wreathMat = new StandardMaterial("wreathMat", this._scene);
+        wreathMat.diffuseColor = new Color3(0.2, 0.6, 0.2); // Green Laurel
 
         const eyeWhiteMat = new StandardMaterial("eyeWhiteMat", this._scene);
         eyeWhiteMat.diffuseColor = new Color3(1, 1, 1);
@@ -96,26 +102,44 @@ export class Player {
         const leatherMat = new StandardMaterial("leatherMat", this._scene);
         leatherMat.diffuseColor = new Color3(0.4, 0.2, 0.1); // Leather Belt/Sandals
 
-        // Head (Sphere)
+        // --- HEAD ---
         this._head = MeshBuilder.CreateSphere("head", { diameter: 0.5, segments: 16 }, this._scene);
         this._head.parent = this.mesh;
         this._head.position.y = 0.8;
         this._head.material = skinMat;
 
+        // Laurel Wreath
+        const wreath = MeshBuilder.CreateTorus("wreath", { diameter: 0.52, thickness: 0.08, tessellation: 16 }, this._scene);
+        wreath.parent = this._head;
+        wreath.position.y = 0.15;
+        wreath.rotation.x = -0.2; // Tilted slightly back
+        wreath.material = wreathMat;
+
+        // Ears
+        const leftEar = MeshBuilder.CreateSphere("leftEar", { diameter: 0.12, segments: 4 }, this._scene);
+        leftEar.parent = this._head;
+        leftEar.position = new Vector3(-0.24, 0, 0);
+        leftEar.material = skinMat;
+
+        const rightEar = MeshBuilder.CreateSphere("rightEar", { diameter: 0.12, segments: 4 }, this._scene);
+        rightEar.parent = this._head;
+        rightEar.position = new Vector3(0.24, 0, 0);
+        rightEar.material = skinMat;
+
         // Eyes
         const leftEye = MeshBuilder.CreateSphere("leftEye", { diameter: 0.12, segments: 8 }, this._scene);
         leftEye.parent = this._head;
-        leftEye.position = new Vector3(-0.1, 0.1, 0.2); // Front-Left
+        leftEye.position = new Vector3(-0.1, 0.05, 0.2); // Front-Left
         leftEye.material = eyeWhiteMat;
 
         const leftPupil = MeshBuilder.CreateSphere("leftPupil", { diameter: 0.05, segments: 4 }, this._scene);
         leftPupil.parent = leftEye;
-        leftPupil.position.z = 0.05; // Slightly forward
+        leftPupil.position.z = 0.05;
         leftPupil.material = eyePupilMat;
 
         const rightEye = MeshBuilder.CreateSphere("rightEye", { diameter: 0.12, segments: 8 }, this._scene);
         rightEye.parent = this._head;
-        rightEye.position = new Vector3(0.1, 0.1, 0.2);
+        rightEye.position = new Vector3(0.1, 0.05, 0.2);
         rightEye.material = eyeWhiteMat;
 
         const rightPupil = MeshBuilder.CreateSphere("rightPupil", { diameter: 0.05, segments: 4 }, this._scene);
@@ -123,7 +147,20 @@ export class Player {
         rightPupil.position.z = 0.05;
         rightPupil.material = eyePupilMat;
 
-        // Beard (Cluster of spheres)
+        // Eyebrows
+        const leftBrow = MeshBuilder.CreateBox("leftBrow", { width: 0.12, height: 0.03, depth: 0.02 }, this._scene);
+        leftBrow.parent = this._head;
+        leftBrow.position = new Vector3(-0.1, 0.15, 0.22);
+        leftBrow.rotation.z = 0.2; // Angry/Determined
+        leftBrow.material = hairMat;
+
+        const rightBrow = MeshBuilder.CreateBox("rightBrow", { width: 0.12, height: 0.03, depth: 0.02 }, this._scene);
+        rightBrow.parent = this._head;
+        rightBrow.position = new Vector3(0.1, 0.15, 0.22);
+        rightBrow.rotation.z = -0.2;
+        rightBrow.material = hairMat;
+
+        // Beard
         const beardCenter = MeshBuilder.CreateSphere("beardCenter", { diameterX: 0.25, diameterY: 0.3, diameterZ: 0.2, segments: 8 }, this._scene);
         beardCenter.parent = this._head;
         beardCenter.position = new Vector3(0, -0.15, 0.2);
@@ -132,23 +169,31 @@ export class Player {
         // Nose
         const nose = MeshBuilder.CreateSphere("nose", { diameter: 0.08, segments: 4 }, this._scene);
         nose.parent = this._head;
-        nose.position = new Vector3(0, 0.05, 0.25);
+        nose.position = new Vector3(0, 0, 0.25);
         nose.material = skinMat;
 
-        // Body (Oval Sphere - Tunic)
+        // --- BODY ---
         this._body = MeshBuilder.CreateSphere("body", { diameterX: 0.9, diameterY: 0.85, diameterZ: 0.7, segments: 16 }, this._scene);
         this._body.parent = this.mesh;
         this._body.position.y = 0.15;
         this._body.material = tunicMat;
 
-        // Belt (Torus)
+        // Toga Sash (Diagonal Torus slice or rotated cylinder... Torus is better)
+        const sash = MeshBuilder.CreateTorus("sash", { diameter: 0.92, thickness: 0.15, tessellation: 16 }, this._scene);
+        sash.parent = this._body;
+        sash.rotation.z = Math.PI / 4; // Diagonal
+        sash.position.y = 0.05;
+        sash.scaling.y = 1.0;
+        sash.material = sashMat;
+
+        // Belt
         const belt = MeshBuilder.CreateTorus("belt", { diameter: 0.88, thickness: 0.1, tessellation: 16 }, this._scene);
         belt.parent = this._body;
         belt.position.y = -0.1; // Waist level
-        belt.scaling.z = 0.8; // Match body oval
+        belt.scaling.z = 0.8;
         belt.material = leatherMat;
 
-        // Arms (Cylinders - Skin)
+        // --- ARMS ---
         this._leftArm = MeshBuilder.CreateCylinder("leftArm", { height: 0.6, diameter: 0.22, tessellation: 12 }, this._scene);
         this._leftArm.parent = this.mesh;
         this._leftArm.setPivotPoint(new Vector3(0, 0.25, 0));
@@ -156,10 +201,9 @@ export class Player {
         this._leftArm.position.y = 0.2;
         this._leftArm.material = skinMat;
 
-        // Hand
         const leftHand = MeshBuilder.CreateSphere("leftHand", { diameter: 0.25, segments: 8 }, this._scene);
         leftHand.parent = this._leftArm;
-        leftHand.position.y = -0.3; // End of arm
+        leftHand.position.y = -0.3;
         leftHand.material = skinMat;
 
         this._rightArm = MeshBuilder.CreateCylinder("rightArm", { height: 0.6, diameter: 0.22, tessellation: 12 }, this._scene);
@@ -169,13 +213,12 @@ export class Player {
         this._rightArm.position.y = 0.2;
         this._rightArm.material = skinMat;
 
-        // Hand
         const rightHand = MeshBuilder.CreateSphere("rightHand", { diameter: 0.25, segments: 8 }, this._scene);
         rightHand.parent = this._rightArm;
         rightHand.position.y = -0.3;
         rightHand.material = skinMat;
 
-        // Legs (Cylinders - Bare Legs)
+        // --- LEGS ---
         this._leftLeg = MeshBuilder.CreateCylinder("leftLeg", { height: 0.6, diameter: 0.28, tessellation: 12 }, this._scene);
         this._leftLeg.parent = this.mesh;
         this._leftLeg.setPivotPoint(new Vector3(0, 0.3, 0));
@@ -183,11 +226,16 @@ export class Player {
         this._leftLeg.position.y = -0.6;
         this._leftLeg.material = skinMat;
 
-        // Foot (Sandal)
-        const leftFoot = MeshBuilder.CreateBox("leftFoot", { width: 0.25, height: 0.1, depth: 0.4 }, this._scene);
-        leftFoot.parent = this._leftLeg;
-        leftFoot.position = new Vector3(0, -0.3, 0.1); // Slightly forward
-        leftFoot.material = leatherMat;
+        // Detailed Sandal (Left)
+        const leftSandalBase = MeshBuilder.CreateBox("leftSandalBase", { width: 0.26, height: 0.05, depth: 0.45 }, this._scene);
+        leftSandalBase.parent = this._leftLeg;
+        leftSandalBase.position = new Vector3(0, -0.3, 0.05);
+        leftSandalBase.material = leatherMat;
+
+        const leftSandalStrap = MeshBuilder.CreateTorus("leftSandalStrap", { diameter: 0.29, thickness: 0.05, tessellation: 8 }, this._scene);
+        leftSandalStrap.parent = leftSandalBase;
+        leftSandalStrap.position.y = 0.05; // On top of base
+        leftSandalStrap.material = leatherMat;
 
         this._rightLeg = MeshBuilder.CreateCylinder("rightLeg", { height: 0.6, diameter: 0.28, tessellation: 12 }, this._scene);
         this._rightLeg.parent = this.mesh;
@@ -196,11 +244,16 @@ export class Player {
         this._rightLeg.position.y = -0.6;
         this._rightLeg.material = skinMat;
 
-        // Foot (Sandal)
-        const rightFoot = MeshBuilder.CreateBox("rightFoot", { width: 0.25, height: 0.1, depth: 0.4 }, this._scene);
-        rightFoot.parent = this._rightLeg;
-        rightFoot.position = new Vector3(0, -0.3, 0.1);
-        rightFoot.material = leatherMat;
+        // Detailed Sandal (Right)
+        const rightSandalBase = MeshBuilder.CreateBox("rightSandalBase", { width: 0.26, height: 0.05, depth: 0.45 }, this._scene);
+        rightSandalBase.parent = this._rightLeg;
+        rightSandalBase.position = new Vector3(0, -0.3, 0.05);
+        rightSandalBase.material = leatherMat;
+
+        const rightSandalStrap = MeshBuilder.CreateTorus("rightSandalStrap", { diameter: 0.29, thickness: 0.05, tessellation: 8 }, this._scene);
+        rightSandalStrap.parent = rightSandalBase;
+        rightSandalStrap.position.y = 0.05;
+        rightSandalStrap.material = leatherMat;
     }
 
     private _createDustParticles(): void {
