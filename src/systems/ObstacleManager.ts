@@ -19,7 +19,7 @@ export class ObstacleManager {
         this._gameSpeed = gameSpeed;
     }
 
-    public update(deltaTime: number, player: Player): void {
+    public update(deltaTime: number, player: Player, onObstacleHit: () => void): void {
         this._spawnTimer += deltaTime;
 
         // Spawning
@@ -34,10 +34,16 @@ export class ObstacleManager {
             obs.update(deltaTime, this._gameSpeed);
 
             // Access public mesh properly initialized in Obstacle constructor
+            // Ensure world matrices are updated for accurate intersection after position change
+            obs.mesh.computeWorldMatrix(true);
+            player.mesh.computeWorldMatrix(true);
+
             if (obs.mesh.intersectsMesh(player.mesh, true)) {
-                console.log("COLLISION!");
-                // Just log for Sprint 2
-                // Ideally we'd trigger a Game Over state
+                onObstacleHit();
+                // Dispose immediately on hit to prevent multi-counting
+                obs.dispose();
+                this._obstacles.splice(i, 1);
+                continue;
             }
 
             if (obs.mesh.position.z < this._despawnZ) {
