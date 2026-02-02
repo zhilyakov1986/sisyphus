@@ -42,7 +42,7 @@ export class Game {
     // Difficulty
     private _totalTime: number = 0;
     private _speedMultiplier: number = 1.0;
-    private _difficultyInterval: number = 15; // Increase speed every 15s
+    private _difficultyInterval: number = 20; // Increase speed every 20s
 
     // FX
     private _shakeIntensity: number = 0;
@@ -133,9 +133,9 @@ export class Game {
 
         // Difficulty Scaling
         this._totalTime += deltaTime;
-        // Increase speed by 5% every 15 seconds
+        // Increase speed by 2.5% every 20 seconds
         const difficultyStage = Math.floor(this._totalTime / this._difficultyInterval);
-        this._speedMultiplier = 1.0 + (difficultyStage * 0.05);
+        this._speedMultiplier = 1.0 + (difficultyStage * 0.025);
 
         // Score based on distance (speed * time)
         const frameDistance = (Ground.WORLD_SPEED * this._speedMultiplier) * deltaTime;

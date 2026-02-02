@@ -10,7 +10,7 @@ export class ObstacleManager {
     private _activePowerups: Powerup[] = [];
 
     private _spawnTimer: number = 0;
-    private _spawnInterval: number = 1.5;
+    private _spawnInterval: number = 2.0;
     private _gameSpeed: number;
 
     // Pools

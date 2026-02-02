@@ -13,14 +13,17 @@ export class Boulder {
     }
 
     private _createBoulder(): void {
-        this.mesh = MeshBuilder.CreateSphere("boulder", { diameter: this._radius * 2, segments: 16 }, this._scene);
+        // Use Polyhedron (Icosahedron) for jagged rock look
+        this.mesh = MeshBuilder.CreatePolyhedron("boulder", {
+            type: 2, // Icosahedron
+            size: this._radius, // Polyhedron uses 'size' which is approx radius
+        }, this._scene);
+
         this.mesh.position.y = this._radius; // Sit on ground
-        // Initial Z will be set by Game loop based on distance
 
         const mat = new StandardMaterial("boulderMat", this._scene);
-        mat.diffuseColor = new Color3(0.4, 0.4, 0.4); // Dark Grey
-        // TODO: Add rock texture
-        mat.specularColor = new Color3(0.1, 0.1, 0.1);
+        mat.diffuseColor = new Color3(0.35, 0.35, 0.35); // Darker Grey
+        mat.specularColor = new Color3(0.05, 0.05, 0.05); // Low specular (rough rock)
         this.mesh.material = mat;
     }
 
