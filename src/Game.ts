@@ -53,10 +53,10 @@ export class Game {
 
         // Setup World Root (Slope)
         this._worldRoot = new TransformNode("worldRoot", this._sceneManager.scene);
-        this._worldRoot.rotation.x = -Math.PI / 8; // Tilt world UP into distance
+        this._worldRoot.rotation.x = Math.PI / 8; // Tilt world DOWN (Downhill)
 
         // Systems
-        this._inputManager = new InputManager(this._sceneManager.scene);
+        this._inputManager = new InputManager();
         this._scoreManager = new ScoreManager();
         this._uiManager = new UIManager();
 

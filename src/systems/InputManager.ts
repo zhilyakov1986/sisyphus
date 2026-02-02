@@ -1,8 +1,8 @@
-import { ActionManager, ExecuteCodeAction, Scene } from "babylonjs";
+
 
 export class InputManager {
     private _inputMap: { [key: string]: boolean } = {};
-    private _scene: Scene;
+
 
     // Actions
     public jump: boolean = false;
@@ -14,17 +14,16 @@ export class InputManager {
     private _rightPressed: boolean = false;
     private _jumpPressed: boolean = false;
 
-    constructor(scene: Scene) {
-        this._scene = scene;
-        this._scene.actionManager = new ActionManager(this._scene);
+    constructor() {
 
-        this._scene.actionManager.registerAction(new ExecuteCodeAction(ActionManager.OnKeyDownTrigger, (evt) => {
-            this._inputMap[evt.sourceEvent.key.toLowerCase()] = true;
-        }));
+        // Use Global Window Events for reliability
+        window.addEventListener("keydown", (evt) => {
+            this._inputMap[evt.key.toLowerCase()] = true;
+        });
 
-        this._scene.actionManager.registerAction(new ExecuteCodeAction(ActionManager.OnKeyUpTrigger, (evt) => {
-            this._inputMap[evt.sourceEvent.key.toLowerCase()] = false;
-        }));
+        window.addEventListener("keyup", (evt) => {
+            this._inputMap[evt.key.toLowerCase()] = false;
+        });
     }
 
     public update(): void {
