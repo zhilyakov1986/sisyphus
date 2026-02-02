@@ -30,6 +30,9 @@ export class Game {
     private _speedMultiplier: number = 1.0;
     private _difficultyInterval: number = 15; // Increase speed every 15s
 
+    // FX
+    private _shakeIntensity: number = 0;
+
     constructor(canvas: HTMLCanvasElement) {
         this._sceneManager = new SceneManager(canvas);
         this._engine = this._sceneManager.engine;
@@ -91,11 +94,41 @@ export class Game {
         this._obstacleManager.update(deltaTime, this._player, () => {
             this._onObstacleHit();
         }, this._speedMultiplier);
+
+        // Camera Shake Logic
+        if (this._shakeIntensity > 0) {
+            const shakeAmount = this._shakeIntensity;
+            const xOffset = (Math.random() - 0.5) * shakeAmount;
+            const yOffset = (Math.random() - 0.5) * shakeAmount;
+
+            // Apply simple target offset
+            if (this._sceneManager.scene.activeCamera) {
+                // @ts-ignore - target exists on ArcRotateCamera
+                this._sceneManager.scene.activeCamera.target.x = xOffset;
+                // @ts-ignore
+                this._sceneManager.scene.activeCamera.target.y = yOffset;
+            }
+
+            // Decay
+            this._shakeIntensity -= deltaTime * 3; // Decay faster
+            if (this._shakeIntensity < 0) {
+                this._shakeIntensity = 0;
+                if (this._sceneManager.scene.activeCamera) {
+                    // @ts-ignore
+                    this._sceneManager.scene.activeCamera.target.x = 0;
+                    // @ts-ignore
+                    this._sceneManager.scene.activeCamera.target.y = 0;
+                }
+            }
+        }
     }
 
     private _onObstacleHit(): void {
         console.log(`Stumble! Distance: ${this._boulderDistance}`);
         this._boulderDistance -= this._penalty;
+
+        // Trigger Shake
+        this._shakeIntensity = 1.5;
     }
 
     private _gameOver(): void {
