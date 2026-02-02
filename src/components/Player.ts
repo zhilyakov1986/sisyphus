@@ -84,45 +84,44 @@ export class Player {
         const tunicMat = new StandardMaterial("tunicMat", this._scene);
         tunicMat.diffuseColor = new Color3(0.95, 0.95, 0.9); // White/Cream Tunic
 
-        // Head (Chubby face)
-        this._head = MeshBuilder.CreateBox("head", { width: 0.5, height: 0.5, depth: 0.5 }, this._scene);
+        // Head (Sphere)
+        this._head = MeshBuilder.CreateSphere("head", { diameter: 0.5, segments: 16 }, this._scene);
         this._head.parent = this.mesh;
         this._head.position.y = 0.8;
         this._head.material = skinMat;
 
-        // Body (Chubby Tunic)
-        // Wider and deeper
-        this._body = MeshBuilder.CreateBox("body", { width: 0.9, height: 0.8, depth: 0.7 }, this._scene);
+        // Body (Oval Sphere - Tunic)
+        // Ideally a slightly flattened sphere
+        this._body = MeshBuilder.CreateSphere("body", { diameterX: 0.9, diameterY: 0.85, diameterZ: 0.7, segments: 16 }, this._scene);
         this._body.parent = this.mesh;
         this._body.position.y = 0.15; // Slightly lower center gravity
         this._body.material = tunicMat;
 
-        // Arms (Skin - sleeveless tunic)
-        // Moved further out due to wider body (Width 0.9 -> Center to edge 0.45)
-        this._leftArm = MeshBuilder.CreateBox("leftArm", { width: 0.2, height: 0.6, depth: 0.2 }, this._scene);
+        // Arms (Cylinders - Skin)
+        // Cylinder height matches Box height (Y axis)
+        this._leftArm = MeshBuilder.CreateCylinder("leftArm", { height: 0.6, diameter: 0.22, tessellation: 12 }, this._scene);
         this._leftArm.parent = this.mesh;
         this._leftArm.setPivotPoint(new Vector3(0, 0.25, 0));
-        this._leftArm.position.x = -0.55; // 0.45 body half + 0.1 arm half
+        this._leftArm.position.x = -0.55;
         this._leftArm.position.y = 0.2;
         this._leftArm.material = skinMat;
 
-        this._rightArm = MeshBuilder.CreateBox("rightArm", { width: 0.2, height: 0.6, depth: 0.2 }, this._scene);
+        this._rightArm = MeshBuilder.CreateCylinder("rightArm", { height: 0.6, diameter: 0.22, tessellation: 12 }, this._scene);
         this._rightArm.parent = this.mesh;
         this._rightArm.setPivotPoint(new Vector3(0, 0.25, 0));
         this._rightArm.position.x = 0.55;
         this._rightArm.position.y = 0.2;
         this._rightArm.material = skinMat;
 
-        // Legs (Bare legs / Sandals)
-        // Thicker legs
-        this._leftLeg = MeshBuilder.CreateBox("leftLeg", { width: 0.25, height: 0.6, depth: 0.25 }, this._scene);
+        // Legs (Cylinders - Bare Legs)
+        this._leftLeg = MeshBuilder.CreateCylinder("leftLeg", { height: 0.6, diameter: 0.28, tessellation: 12 }, this._scene);
         this._leftLeg.parent = this.mesh;
         this._leftLeg.setPivotPoint(new Vector3(0, 0.3, 0));
         this._leftLeg.position.x = -0.25;
-        this._leftLeg.position.y = -0.6; // Lower
-        this._leftLeg.material = skinMat; // Bare legs
+        this._leftLeg.position.y = -0.6;
+        this._leftLeg.material = skinMat;
 
-        this._rightLeg = MeshBuilder.CreateBox("rightLeg", { width: 0.25, height: 0.6, depth: 0.25 }, this._scene);
+        this._rightLeg = MeshBuilder.CreateCylinder("rightLeg", { height: 0.6, diameter: 0.28, tessellation: 12 }, this._scene);
         this._rightLeg.parent = this.mesh;
         this._rightLeg.setPivotPoint(new Vector3(0, 0.3, 0));
         this._rightLeg.position.x = 0.25;
