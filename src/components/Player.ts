@@ -7,6 +7,10 @@ export class Player {
     private _input: InputManager;
     private _dustParticles!: ParticleSystem;
 
+    // Shield
+    private _hasShield: boolean = false;
+    private _shieldMesh!: Mesh;
+
     // Lanes
     private _currentLane: number = 0; // -1 (Left), 0 (Center), 1 (Right)
     private _laneWidth: number = 3;
@@ -24,7 +28,34 @@ export class Player {
         this._input = input;
 
         this._createPlayerMesh();
+        this._createShieldMesh(); // Create shield visual
         this._createDustParticles();
+    }
+
+    private _createShieldMesh(): void {
+        this._shieldMesh = MeshBuilder.CreateSphere("shieldVisual", { diameter: 1.5 }, this._scene);
+        this._shieldMesh.parent = this.mesh; // Attach to player
+
+        const mat = new StandardMaterial("shieldMat", this._scene);
+        mat.diffuseColor = new Color3(0, 1, 1);
+        mat.alpha = 0.4;
+        this._shieldMesh.material = mat;
+
+        this._shieldMesh.isVisible = false; // Hidden by default
+    }
+
+    public grantShield(): void {
+        this._hasShield = true;
+        this._shieldMesh.isVisible = true;
+    }
+
+    public absorbHit(): boolean {
+        if (this._hasShield) {
+            this._hasShield = false;
+            this._shieldMesh.isVisible = false;
+            return true; // Hit absorbed
+        }
+        return false; // Took damage
     }
 
     private _createPlayerMesh(): void {

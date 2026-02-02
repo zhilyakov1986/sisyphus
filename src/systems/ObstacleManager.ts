@@ -1,11 +1,14 @@
 import { Scene } from "babylonjs";
 import { Obstacle, ObstacleType } from "../components/Obstacle";
+import { Powerup, PowerupType } from "../components/Powerup";
 import { Player } from "../components/Player";
 import { ObjectPool } from "./ObjectPool";
 
 export class ObstacleManager {
     private _scene: Scene;
     private _activeObstacles: Obstacle[] = [];
+    private _activePowerups: Powerup[] = [];
+
     private _spawnTimer: number = 0;
     private _spawnInterval: number = 1.5;
     private _gameSpeed: number;
@@ -13,6 +16,8 @@ export class ObstacleManager {
     // Pools
     private _wallPool: ObjectPool<Obstacle>;
     private _barrierPool: ObjectPool<Obstacle>;
+    private _spikePool: ObjectPool<Obstacle>;
+    private _powerupPool: ObjectPool<Powerup>;
 
     // Config
     private _laneWidth: number = 3;
@@ -23,25 +28,30 @@ export class ObstacleManager {
         this._scene = scene;
         this._gameSpeed = gameSpeed;
 
-        // Initialize Pools
+        // Initialize Obstacle Pools
         this._wallPool = new ObjectPool<Obstacle>(
-            () => {
-                const o = new Obstacle(this._scene, ObstacleType.WALL, -999, 0);
-                o.deactivate();
-                return o;
-            },
-            () => { }, // We manually reset in spawn
-            10 // Start with 10 walls
+            () => { const o = new Obstacle(this._scene, ObstacleType.WALL, -999, 0); o.deactivate(); return o; },
+            () => { },
+            10
         );
 
         this._barrierPool = new ObjectPool<Obstacle>(
-            () => {
-                const o = new Obstacle(this._scene, ObstacleType.BARRIER, -999, 0);
-                o.deactivate();
-                return o;
-            },
+            () => { const o = new Obstacle(this._scene, ObstacleType.BARRIER, -999, 0); o.deactivate(); return o; },
             () => { },
             10
+        );
+
+        this._spikePool = new ObjectPool<Obstacle>(
+            () => { const o = new Obstacle(this._scene, ObstacleType.SPIKE, -999, 0); o.deactivate(); return o; },
+            () => { },
+            10
+        );
+
+        // Powerup Pool
+        this._powerupPool = new ObjectPool<Powerup>(
+            () => { const p = new Powerup(this._scene, PowerupType.SHIELD, -999, 0); p.deactivate(); return p; },
+            () => { },
+            5
         );
     }
 
@@ -50,12 +60,13 @@ export class ObstacleManager {
         const currentInterval = this._spawnInterval / speedMultiplier;
 
         if (this._spawnTimer >= currentInterval) {
-            this._spawnObstacle();
+            this._spawnObject();
             this._spawnTimer = 0;
         }
 
         const currentSpeed = this._gameSpeed * speedMultiplier;
 
+        // Update Obstacles
         for (let i = this._activeObstacles.length - 1; i >= 0; i--) {
             const obs = this._activeObstacles[i];
             obs.update(deltaTime, currentSpeed);
@@ -64,43 +75,92 @@ export class ObstacleManager {
             player.mesh.computeWorldMatrix(true);
 
             if (obs.mesh.intersectsMesh(player.mesh, true)) {
-                onObstacleHit();
-                this._returnToPool(obs);
+                // Check if shield absorbs hits
+                if (player.absorbHit()) {
+                    console.log("Shield absorbed hit!");
+                } else {
+                    onObstacleHit();
+                }
+
+                this._returnObstacleToPool(obs);
                 this._activeObstacles.splice(i, 1);
                 continue;
             }
 
             if (obs.mesh.position.z < this._despawnZ) {
-                this._returnToPool(obs);
+                this._returnObstacleToPool(obs);
                 this._activeObstacles.splice(i, 1);
+            }
+        }
+
+        // Update Powerups
+        for (let i = this._activePowerups.length - 1; i >= 0; i--) {
+            const p = this._activePowerups[i];
+            p.update(deltaTime, currentSpeed);
+
+            p.mesh.computeWorldMatrix(true);
+            player.mesh.computeWorldMatrix(true);
+
+            if (p.mesh.intersectsMesh(player.mesh, true)) {
+                if (p.type === PowerupType.SHIELD) {
+                    player.grantShield();
+                    console.log("Shield powerup collected!");
+                }
+                this._returnPowerupToPool(p);
+                this._activePowerups.splice(i, 1);
+                continue;
+            }
+
+            if (p.mesh.position.z < this._despawnZ) {
+                this._returnPowerupToPool(p);
+                this._activePowerups.splice(i, 1);
             }
         }
     }
 
-    private _spawnObstacle(): void {
+    private _spawnObject(): void {
         const lanes = [-1, 0, 1];
         const randomLane = lanes[Math.floor(Math.random() * lanes.length)];
         const posX = randomLane * -this._laneWidth;
 
-        const type = Math.random() > 0.5 ? ObstacleType.WALL : ObstacleType.BARRIER;
-        let obstacle: Obstacle;
-
-        if (type === ObstacleType.WALL) {
-            obstacle = this._wallPool.get();
+        // 10% Chance for Powerup
+        const rand = Math.random();
+        if (rand < 0.1) {
+            // Spawn Powerup
+            const powerup = this._powerupPool.get();
+            powerup.reset(this._spawnZ, posX);
+            this._activePowerups.push(powerup);
         } else {
-            obstacle = this._barrierPool.get();
-        }
+            // Spawn Obstacle
+            const typeRand = Math.random();
+            let obstacle: Obstacle;
 
-        obstacle.reset(this._spawnZ, posX);
-        this._activeObstacles.push(obstacle);
+            if (typeRand < 0.33) {
+                obstacle = this._wallPool.get();
+            } else if (typeRand < 0.66) {
+                obstacle = this._barrierPool.get();
+            } else {
+                obstacle = this._spikePool.get();
+            }
+
+            obstacle.reset(this._spawnZ, posX);
+            this._activeObstacles.push(obstacle);
+        }
     }
 
-    private _returnToPool(obs: Obstacle): void {
+    private _returnObstacleToPool(obs: Obstacle): void {
         obs.deactivate();
         if (obs.type === ObstacleType.WALL) {
             this._wallPool.return(obs);
-        } else {
+        } else if (obs.type === ObstacleType.BARRIER) {
             this._barrierPool.return(obs);
+        } else {
+            this._spikePool.return(obs);
         }
+    }
+
+    private _returnPowerupToPool(p: Powerup): void {
+        p.deactivate();
+        this._powerupPool.return(p);
     }
 }

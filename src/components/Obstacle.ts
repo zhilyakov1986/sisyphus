@@ -2,7 +2,8 @@ import { Mesh, MeshBuilder, Scene, StandardMaterial, Color3 } from "babylonjs";
 
 export const ObstacleType = {
     WALL: 0,
-    BARRIER: 1
+    BARRIER: 1,
+    SPIKE: 2
 } as const;
 
 export type ObstacleType = typeof ObstacleType[keyof typeof ObstacleType];
@@ -25,20 +26,21 @@ export class Obstacle {
         const mat = new StandardMaterial("obsMat", this._scene);
 
         if (type === ObstacleType.WALL) {
-            // Box full height - must dodge
             mesh = MeshBuilder.CreateBox("wall", { width: 2, height: 3, depth: 1 }, this._scene);
-            mesh.position.y = 1.5; // pivot is center
+            mesh.position.y = 1.5;
             mat.diffuseColor = Color3.Red();
-        } else {
-            // Barrier low height - can jump
+        } else if (type === ObstacleType.BARRIER) {
             mesh = MeshBuilder.CreateBox("barrier", { width: 2.5, height: 1, depth: 0.5 }, this._scene);
             mesh.position.y = 0.5;
             mat.diffuseColor = Color3.Purple();
+        } else {
+            // SPIKE - Pyramid
+            mesh = MeshBuilder.CreateCylinder("spike", { diameterTop: 0, diameterBottom: 1.5, height: 1.5, tessellation: 4 }, this._scene);
+            mesh.position.y = 0.75;
+            mat.diffuseColor = new Color3(0.5, 0, 0); // Dark Red
         }
 
         mesh.material = mat;
-        // Optimization: Freeze world matrix if static, but it moves, so maybe not?
-        // Actually, since we move it every frame, manual update might be better than auto.
         return mesh;
     }
 
