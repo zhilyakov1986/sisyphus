@@ -194,12 +194,28 @@ export class Player {
         belt.material = leatherMat;
 
         // --- ARMS ---
+        // Shoulders (Deltoids)
+        const leftShoulder = MeshBuilder.CreateSphere("leftShoulder", { diameter: 0.35, segments: 12 }, this._scene);
+        leftShoulder.parent = this.mesh;
+        leftShoulder.position = new Vector3(-0.45, 0.35, 0); // High on torso
+        leftShoulder.material = skinMat;
+
+        const rightShoulder = MeshBuilder.CreateSphere("rightShoulder", { diameter: 0.35, segments: 12 }, this._scene);
+        rightShoulder.parent = this.mesh;
+        rightShoulder.position = new Vector3(0.45, 0.35, 0);
+        rightShoulder.material = skinMat;
+
         this._leftArm = MeshBuilder.CreateCylinder("leftArm", { height: 0.6, diameter: 0.22, tessellation: 12 }, this._scene);
         this._leftArm.parent = this.mesh;
         this._leftArm.setPivotPoint(new Vector3(0, 0.25, 0));
         this._leftArm.position.x = -0.55;
         this._leftArm.position.y = 0.2;
         this._leftArm.material = skinMat;
+
+        const leftArmCap = MeshBuilder.CreateSphere("leftArmCap", { diameter: 0.22, segments: 8 }, this._scene);
+        leftArmCap.parent = this._leftArm;
+        leftArmCap.position.y = 0.3; // Top of cylinder
+        leftArmCap.material = skinMat;
 
         const leftHand = MeshBuilder.CreateSphere("leftHand", { diameter: 0.25, segments: 8 }, this._scene);
         leftHand.parent = this._leftArm;
@@ -212,6 +228,11 @@ export class Player {
         this._rightArm.position.x = 0.55;
         this._rightArm.position.y = 0.2;
         this._rightArm.material = skinMat;
+
+        const rightArmCap = MeshBuilder.CreateSphere("rightArmCap", { diameter: 0.22, segments: 8 }, this._scene);
+        rightArmCap.parent = this._rightArm;
+        rightArmCap.position.y = 0.3; // Top of cylinder
+        rightArmCap.material = skinMat;
 
         const rightHand = MeshBuilder.CreateSphere("rightHand", { diameter: 0.25, segments: 8 }, this._scene);
         rightHand.parent = this._rightArm;
