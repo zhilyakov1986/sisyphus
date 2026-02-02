@@ -6,7 +6,15 @@ export class Ground {
     private _material!: StandardMaterial;
 
     // World Speed Simulation
-    private _speed: number = 0.5; // Texture scroll speed
+    // 0.5 texture offset speed * 5 (ratio of height/vScale) = 2.5 units/sec approximately
+    // Let's define World Unit Speed and derive texture speed.
+    // If World Speed = 20 units/sec.
+    // Texture repeats every 5 units.
+    // Texture speed = 20 / 5 = 4 offset/sec.
+
+    public static readonly ITEM_HEIGHT = 100;
+    public static readonly V_SCALE = 20;
+    public static readonly WORLD_SPEED = 30; // 30 units per second
 
     constructor(scene: Scene) {
         this._scene = scene;
@@ -15,7 +23,7 @@ export class Ground {
 
     private _createGround(): void {
         const width = 20;
-        const height = 100;
+        const height = Ground.ITEM_HEIGHT;
 
         this.mesh = MeshBuilder.CreateGround("ground", { width: width, height: height }, this._scene);
         this.mesh.position.z = 10;
@@ -53,7 +61,7 @@ export class Ground {
 
         texture.update();
         texture.uScale = 4;
-        texture.vScale = 20;
+        texture.vScale = Ground.V_SCALE;
 
         this._material.diffuseTexture = texture;
         this.mesh.material = this._material;
@@ -61,7 +69,9 @@ export class Ground {
 
     public update(deltaTime: number): void {
         if (this._material.diffuseTexture) {
-            (this._material.diffuseTexture as Texture).vOffset -= this._speed * deltaTime;
+            // Speed (offset/sec) = WorldSpeed / (Height / VScale)
+            const textureSpeed = Ground.WORLD_SPEED / (Ground.ITEM_HEIGHT / Ground.V_SCALE);
+            (this._material.diffuseTexture as Texture).vOffset -= textureSpeed * deltaTime;
         }
     }
 }
