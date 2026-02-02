@@ -19,19 +19,25 @@ export class ObstacleManager {
         this._gameSpeed = gameSpeed;
     }
 
-    public update(deltaTime: number, player: Player, onObstacleHit: () => void): void {
+    public update(deltaTime: number, player: Player, onObstacleHit: () => void, speedMultiplier: number): void {
         this._spawnTimer += deltaTime;
 
+        // Scale spawn interval by speed (Faster speed = Faster spawns to maintain density)
+        // Interval = BaseInterval / Multiplier
+        const currentInterval = this._spawnInterval / speedMultiplier;
+
         // Spawning
-        if (this._spawnTimer >= this._spawnInterval) {
+        if (this._spawnTimer >= currentInterval) {
             this._spawnObstacle();
             this._spawnTimer = 0;
         }
 
         // Movement & Cleanup & Collision
+        const currentSpeed = this._gameSpeed * speedMultiplier;
+
         for (let i = this._obstacles.length - 1; i >= 0; i--) {
             const obs = this._obstacles[i];
-            obs.update(deltaTime, this._gameSpeed);
+            obs.update(deltaTime, currentSpeed);
 
             // Access public mesh properly initialized in Obstacle constructor
             // Ensure world matrices are updated for accurate intersection after position change

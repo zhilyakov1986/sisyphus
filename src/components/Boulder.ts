@@ -51,12 +51,6 @@ export class Boulder {
 
         this.mesh.position.z = -distance;
 
-        // Rotation
-        // Circumference = 2 * PI * r
-        // Speed = dist / time
-        // Rotations per sec = Speed / Circumference
-        // Angular velocity = Speed / r
-
         // Roll FORWARD (towards +Z)? 
         // Axis: X axis.
         // Positive rotation on X rolls "forward" towards +Z?

@@ -4,6 +4,7 @@ import { Player } from "./components/Player";
 import { Ground } from "./components/Ground";
 import { ObstacleManager } from "./systems/ObstacleManager";
 import { Boulder } from "./components/Boulder";
+import { ScoreManager } from "./systems/ScoreManager";
 import { Engine } from "babylonjs";
 
 export class Game {
@@ -13,6 +14,7 @@ export class Game {
     private _ground: Ground;
     private _obstacleManager: ObstacleManager;
     private _boulder: Boulder;
+    private _scoreManager: ScoreManager;
     private _engine: Engine;
 
     // Game State
@@ -23,12 +25,18 @@ export class Game {
     private _recoveryRate: number = 1; // Distance regained per second
     private _penalty: number = 5; // Distance lost per hit
 
+    // Difficulty
+    private _totalTime: number = 0;
+    private _speedMultiplier: number = 1.0;
+    private _difficultyInterval: number = 15; // Increase speed every 15s
+
     constructor(canvas: HTMLCanvasElement) {
         this._sceneManager = new SceneManager(canvas);
         this._engine = this._sceneManager.engine;
 
         // Systems
         this._inputManager = new InputManager(this._sceneManager.scene);
+        this._scoreManager = new ScoreManager();
 
         // Components
         this._ground = new Ground(this._sceneManager.scene);
@@ -54,7 +62,18 @@ export class Game {
     private update(deltaTime: number): void {
         this._inputManager.update();
         this._player.update(deltaTime);
-        this._ground.update(deltaTime);
+
+        // Difficulty Scaling
+        this._totalTime += deltaTime;
+        // Increase speed by 5% every 15 seconds
+        const difficultyStage = Math.floor(this._totalTime / this._difficultyInterval);
+        this._speedMultiplier = 1.0 + (difficultyStage * 0.05);
+
+        // Score based on distance (speed * time)
+        const frameDistance = (Ground.WORLD_SPEED * this._speedMultiplier) * deltaTime;
+        this._scoreManager.addScore(frameDistance);
+
+        this._ground.update(deltaTime, this._speedMultiplier);
 
         // Boulder Logic
         // Recover distance slowly
@@ -65,11 +84,13 @@ export class Game {
             this._gameOver();
         }
 
-        this._boulder.update(deltaTime, this._boulderDistance, Ground.WORLD_SPEED);
+        // Pass calculated world speed (Base * Multiplier) to Boulder
+        const currentWorldSpeed = Ground.WORLD_SPEED * this._speedMultiplier;
+        this._boulder.update(deltaTime, this._boulderDistance, currentWorldSpeed);
 
         this._obstacleManager.update(deltaTime, this._player, () => {
             this._onObstacleHit();
-        });
+        }, this._speedMultiplier);
     }
 
     private _onObstacleHit(): void {
@@ -79,8 +100,9 @@ export class Game {
 
     private _gameOver(): void {
         this._isGameOver = true;
+        this._scoreManager.save();
         console.log("GAME OVER");
-        // alert("GAME OVER! The Boulder Caught You.");
-        // location.reload();
+        alert(`GAME OVER! Final Score: ${this._scoreManager.currentScore}`);
+        location.reload();
     }
 }

@@ -67,10 +67,12 @@ export class Ground {
         this.mesh.material = this._material;
     }
 
-    public update(deltaTime: number): void {
+    public update(deltaTime: number, speedMultiplier: number): void {
         if (this._material.diffuseTexture) {
             // Speed (offset/sec) = WorldSpeed / (Height / VScale)
-            const textureSpeed = Ground.WORLD_SPEED / (Ground.ITEM_HEIGHT / Ground.V_SCALE);
+            // Apply speed multiplier
+            const finalSpeed = (Ground.WORLD_SPEED * speedMultiplier);
+            const textureSpeed = finalSpeed / (Ground.ITEM_HEIGHT / Ground.V_SCALE);
             (this._material.diffuseTexture as Texture).vOffset -= textureSpeed * deltaTime;
         }
     }
