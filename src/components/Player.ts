@@ -73,66 +73,61 @@ export class Player {
 
     private _createPlayerMesh(): void {
         // Parent Mesh (Invisible box for physics/position)
-        // We set pivot at bottom center (0.5 y relative to 1 height box?)
         this.mesh = MeshBuilder.CreateBox("player", { height: 2, width: 1, depth: 1 }, this._scene);
-        this.mesh.position.y = 1.0; // Box center is at 1.0, so feet are at 0.0
+        this.mesh.position.y = 1.0;
         this.mesh.isVisible = false;
 
         // Materials
         const skinMat = new StandardMaterial("skinMat", this._scene);
         skinMat.diffuseColor = new Color3(1, 0.8, 0.6); // Peach
 
-        const shirtMat = new StandardMaterial("shirtMat", this._scene);
-        shirtMat.diffuseColor = new Color3(0.2, 0.2, 0.8); // Blue shirt
+        const tunicMat = new StandardMaterial("tunicMat", this._scene);
+        tunicMat.diffuseColor = new Color3(0.95, 0.95, 0.9); // White/Cream Tunic
 
-        const pantsMat = new StandardMaterial("pantsMat", this._scene);
-        pantsMat.diffuseColor = new Color3(0.1, 0.1, 0.1); // Dark grey pants
-
-        // Head
-        this._head = MeshBuilder.CreateBox("head", { size: 0.4 }, this._scene);
+        // Head (Chubby face)
+        this._head = MeshBuilder.CreateBox("head", { width: 0.5, height: 0.5, depth: 0.5 }, this._scene);
         this._head.parent = this.mesh;
-        this._head.position.y = 0.7; // Relative to 0.0 center of 2.0 height box? No, relative to parent center.
-        // Parent is Box height 2. Center is 0. Feet -1. Head +1.
-        // Let's refine relative positions.
-        // If parent center is (0,0,0), then Top is +1.
         this._head.position.y = 0.8;
         this._head.material = skinMat;
 
-        // Body
-        this._body = MeshBuilder.CreateBox("body", { width: 0.5, height: 0.7, depth: 0.3 }, this._scene);
+        // Body (Chubby Tunic)
+        // Wider and deeper
+        this._body = MeshBuilder.CreateBox("body", { width: 0.9, height: 0.8, depth: 0.7 }, this._scene);
         this._body.parent = this.mesh;
-        this._body.position.y = 0.2;
-        this._body.material = shirtMat;
+        this._body.position.y = 0.15; // Slightly lower center gravity
+        this._body.material = tunicMat;
 
-        // Arms
-        this._leftArm = MeshBuilder.CreateBox("leftArm", { width: 0.15, height: 0.6, depth: 0.15 }, this._scene);
+        // Arms (Skin - sleeveless tunic)
+        // Moved further out due to wider body (Width 0.9 -> Center to edge 0.45)
+        this._leftArm = MeshBuilder.CreateBox("leftArm", { width: 0.2, height: 0.6, depth: 0.2 }, this._scene);
         this._leftArm.parent = this.mesh;
-        this._leftArm.setPivotPoint(new Vector3(0, 0.25, 0)); // Pivot near shoulder
-        this._leftArm.position.x = -0.35;
+        this._leftArm.setPivotPoint(new Vector3(0, 0.25, 0));
+        this._leftArm.position.x = -0.55; // 0.45 body half + 0.1 arm half
         this._leftArm.position.y = 0.2;
         this._leftArm.material = skinMat;
 
-        this._rightArm = MeshBuilder.CreateBox("rightArm", { width: 0.15, height: 0.6, depth: 0.15 }, this._scene);
+        this._rightArm = MeshBuilder.CreateBox("rightArm", { width: 0.2, height: 0.6, depth: 0.2 }, this._scene);
         this._rightArm.parent = this.mesh;
         this._rightArm.setPivotPoint(new Vector3(0, 0.25, 0));
-        this._rightArm.position.x = 0.35;
+        this._rightArm.position.x = 0.55;
         this._rightArm.position.y = 0.2;
         this._rightArm.material = skinMat;
 
-        // Legs
-        this._leftLeg = MeshBuilder.CreateBox("leftLeg", { width: 0.18, height: 0.7, depth: 0.2 }, this._scene);
+        // Legs (Bare legs / Sandals)
+        // Thicker legs
+        this._leftLeg = MeshBuilder.CreateBox("leftLeg", { width: 0.25, height: 0.6, depth: 0.25 }, this._scene);
         this._leftLeg.parent = this.mesh;
-        this._leftLeg.setPivotPoint(new Vector3(0, 0.3, 0)); // Pivot near hip
-        this._leftLeg.position.x = -0.15;
-        this._leftLeg.position.y = -0.55;
-        this._leftLeg.material = pantsMat;
+        this._leftLeg.setPivotPoint(new Vector3(0, 0.3, 0));
+        this._leftLeg.position.x = -0.25;
+        this._leftLeg.position.y = -0.6; // Lower
+        this._leftLeg.material = skinMat; // Bare legs
 
-        this._rightLeg = MeshBuilder.CreateBox("rightLeg", { width: 0.18, height: 0.7, depth: 0.2 }, this._scene);
+        this._rightLeg = MeshBuilder.CreateBox("rightLeg", { width: 0.25, height: 0.6, depth: 0.25 }, this._scene);
         this._rightLeg.parent = this.mesh;
         this._rightLeg.setPivotPoint(new Vector3(0, 0.3, 0));
-        this._rightLeg.position.x = 0.15;
-        this._rightLeg.position.y = -0.55;
-        this._rightLeg.material = pantsMat;
+        this._rightLeg.position.x = 0.25;
+        this._rightLeg.position.y = -0.6;
+        this._rightLeg.material = skinMat;
     }
 
     private _createDustParticles(): void {
