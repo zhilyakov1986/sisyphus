@@ -6,7 +6,7 @@ import { ObstacleManager } from "./systems/ObstacleManager";
 import { Boulder } from "./components/Boulder";
 import { ScoreManager } from "./systems/ScoreManager";
 import { UIManager } from "./systems/UIManager";
-import { Engine } from "babylonjs";
+import { Engine, TransformNode } from "babylonjs";
 
 const GameState = {
     START: 0,
@@ -28,6 +28,9 @@ export class Game {
     private _uiManager: UIManager;
     private _engine: Engine;
 
+    // World Root for Slope
+    private _worldRoot: TransformNode;
+
     // Game State
     private _state: GameState = GameState.START;
     private _boulderDistance: number = 15; // Starting distance
@@ -48,18 +51,27 @@ export class Game {
         this._sceneManager = new SceneManager(canvas);
         this._engine = this._sceneManager.engine;
 
+        // Setup World Root (Slope)
+        this._worldRoot = new TransformNode("worldRoot", this._sceneManager.scene);
+        this._worldRoot.rotation.x = -Math.PI / 8; // Tilt world UP into distance
+
         // Systems
         this._inputManager = new InputManager(this._sceneManager.scene);
         this._scoreManager = new ScoreManager();
         this._uiManager = new UIManager();
 
-        // Components
+        // Components (Parented to World Root)
         this._ground = new Ground(this._sceneManager.scene);
-        this._player = new Player(this._sceneManager.scene, this._inputManager);
-        this._boulder = new Boulder(this._sceneManager.scene);
+        this._ground.mesh.parent = this._worldRoot;
 
-        // Obstacles
-        this._obstacleManager = new ObstacleManager(this._sceneManager.scene, Ground.WORLD_SPEED);
+        this._player = new Player(this._sceneManager.scene, this._inputManager);
+        this._player.mesh.parent = this._worldRoot;
+
+        this._boulder = new Boulder(this._sceneManager.scene);
+        this._boulder.mesh.parent = this._worldRoot;
+
+        // Obstacles (Pass worldRoot)
+        this._obstacleManager = new ObstacleManager(this._sceneManager.scene, Ground.WORLD_SPEED, this._worldRoot);
 
         // Initial UI State
         this._uiManager.showStartScreen();

@@ -1,4 +1,4 @@
-import { Scene } from "babylonjs";
+import { Scene, TransformNode } from "babylonjs";
 import { Obstacle, ObstacleType } from "../components/Obstacle";
 import { Powerup, PowerupType } from "../components/Powerup";
 import { Player } from "../components/Player";
@@ -24,32 +24,52 @@ export class ObstacleManager {
     private _spawnZ: number = 50;
     private _despawnZ: number = -10;
 
-    constructor(scene: Scene, gameSpeed: number) {
+    constructor(scene: Scene, gameSpeed: number, worldRoot: TransformNode) {
         this._scene = scene;
         this._gameSpeed = gameSpeed;
 
         // Initialize Obstacle Pools
         this._wallPool = new ObjectPool<Obstacle>(
-            () => { const o = new Obstacle(this._scene, ObstacleType.WALL, -999, 0); o.deactivate(); return o; },
+            () => {
+                const o = new Obstacle(this._scene, ObstacleType.WALL, -999, 0);
+                o.mesh.parent = worldRoot;
+                o.deactivate();
+                return o;
+            },
             () => { },
             10
         );
 
         this._barrierPool = new ObjectPool<Obstacle>(
-            () => { const o = new Obstacle(this._scene, ObstacleType.BARRIER, -999, 0); o.deactivate(); return o; },
+            () => {
+                const o = new Obstacle(this._scene, ObstacleType.BARRIER, -999, 0);
+                o.mesh.parent = worldRoot;
+                o.deactivate();
+                return o;
+            },
             () => { },
             10
         );
 
         this._spikePool = new ObjectPool<Obstacle>(
-            () => { const o = new Obstacle(this._scene, ObstacleType.SPIKE, -999, 0); o.deactivate(); return o; },
+            () => {
+                const o = new Obstacle(this._scene, ObstacleType.SPIKE, -999, 0);
+                o.mesh.parent = worldRoot;
+                o.deactivate();
+                return o;
+            },
             () => { },
             10
         );
 
         // Powerup Pool
         this._powerupPool = new ObjectPool<Powerup>(
-            () => { const p = new Powerup(this._scene, PowerupType.SHIELD, -999, 0); p.deactivate(); return p; },
+            () => {
+                const p = new Powerup(this._scene, PowerupType.SHIELD, -999, 0);
+                p.mesh.parent = worldRoot;
+                p.deactivate();
+                return p;
+            },
             () => { },
             5
         );
@@ -123,7 +143,6 @@ export class ObstacleManager {
         const randomLane = lanes[Math.floor(Math.random() * lanes.length)];
         const posX = randomLane * -this._laneWidth;
 
-        // 10% Chance for Powerup
         const rand = Math.random();
         if (rand < 0.1) {
             // Spawn Powerup
