@@ -5,7 +5,17 @@ import { Ground } from "./components/Ground";
 import { ObstacleManager } from "./systems/ObstacleManager";
 import { Boulder } from "./components/Boulder";
 import { ScoreManager } from "./systems/ScoreManager";
+import { UIManager } from "./systems/UIManager";
 import { Engine } from "babylonjs";
+
+const GameState = {
+    START: 0,
+    PLAYING: 1,
+    PAUSED: 2,
+    GAMEOVER: 3
+} as const;
+
+type GameState = typeof GameState[keyof typeof GameState];
 
 export class Game {
     private _sceneManager: SceneManager;
@@ -15,10 +25,11 @@ export class Game {
     private _obstacleManager: ObstacleManager;
     private _boulder: Boulder;
     private _scoreManager: ScoreManager;
+    private _uiManager: UIManager;
     private _engine: Engine;
 
     // Game State
-    private _isGameOver: boolean = false;
+    private _state: GameState = GameState.START;
     private _boulderDistance: number = 15; // Starting distance
     private _minDistance: number = 3; // Game Over distance
     private _maxDistance: number = 15;
@@ -40,6 +51,7 @@ export class Game {
         // Systems
         this._inputManager = new InputManager(this._sceneManager.scene);
         this._scoreManager = new ScoreManager();
+        this._uiManager = new UIManager();
 
         // Components
         this._ground = new Ground(this._sceneManager.scene);
@@ -48,16 +60,57 @@ export class Game {
 
         // Obstacles
         this._obstacleManager = new ObstacleManager(this._sceneManager.scene, Ground.WORLD_SPEED);
+
+        // Initial UI State
+        this._uiManager.showStartScreen();
+        this._uiManager.updateHUD(0, this._scoreManager.bestScore);
+
+        // Listen for global keys for state management (Start/Pause)
+        window.addEventListener("keydown", (e) => this._handleGlobalInput(e));
+    }
+
+    private _handleGlobalInput(e: KeyboardEvent): void {
+        if (this._state === GameState.START) {
+            this._startGame();
+        } else if (this._state === GameState.PLAYING) {
+            if (e.key === "Escape") {
+                this._pauseGame();
+            }
+        } else if (this._state === GameState.PAUSED) {
+            if (e.key === "Escape") {
+                this._resumeGame();
+            }
+        } else if (this._state === GameState.GAMEOVER) {
+            if (e.key === "Enter") {
+                location.reload();
+            }
+        }
+    }
+
+    private _startGame(): void {
+        this._state = GameState.PLAYING;
+        this._uiManager.showHUD();
+    }
+
+    private _pauseGame(): void {
+        this._state = GameState.PAUSED;
+        this._uiManager.showPauseMenu();
+    }
+
+    private _resumeGame(): void {
+        this._state = GameState.PLAYING;
+        this._uiManager.showHUD();
     }
 
     public start(): void {
         this._engine.runRenderLoop(() => {
-            if (this._isGameOver) return;
-
             // Clamp deltaTime to max 0.1s (100ms) to prevent huge steps on startup/lag
             const deltaTime = Math.min(this._engine.getDeltaTime() / 1000, 0.1);
 
-            this.update(deltaTime);
+            if (this._state === GameState.PLAYING) {
+                this.update(deltaTime);
+            }
+
             this._sceneManager.scene.render();
         });
     }
@@ -75,6 +128,7 @@ export class Game {
         // Score based on distance (speed * time)
         const frameDistance = (Ground.WORLD_SPEED * this._speedMultiplier) * deltaTime;
         this._scoreManager.addScore(frameDistance);
+        this._uiManager.updateHUD(this._scoreManager.currentScore, this._scoreManager.bestScore);
 
         this._ground.update(deltaTime, this._speedMultiplier);
 
@@ -132,10 +186,8 @@ export class Game {
     }
 
     private _gameOver(): void {
-        this._isGameOver = true;
+        this._state = GameState.GAMEOVER;
         this._scoreManager.save();
-        console.log("GAME OVER");
-        alert(`GAME OVER! Final Score: ${this._scoreManager.currentScore}`);
-        location.reload();
+        this._uiManager.showGameOver(this._scoreManager.currentScore);
     }
 }
