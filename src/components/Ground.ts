@@ -1,4 +1,4 @@
-import { Mesh, MeshBuilder, Scene, StandardMaterial, Color3, DynamicTexture, Texture } from "babylonjs";
+import { Mesh, MeshBuilder, Scene, StandardMaterial, Color3, Texture } from "babylonjs";
 
 export class Ground {
     public mesh!: Mesh;
@@ -29,32 +29,11 @@ export class Ground {
         this.mesh.position.z = 10;
 
         this._material = new StandardMaterial("groundMat", this._scene);
-        this._material.diffuseColor = new Color3(0.8, 0.8, 0.8);
-        this._material.specularColor = new Color3(0, 0, 0); // No shiny grass
+        this._material.diffuseColor = new Color3(1, 1, 1); // White base to show texture colors true
+        this._material.specularColor = new Color3(0, 0, 0);
 
-        // Create a procedural Grass texture using DynamicTexture
-        const textureSize = 512;
-        const texture = new DynamicTexture("grassTexture", textureSize, this._scene, true);
-        const ctx = texture.getContext();
-
-        // Base Green
-        ctx.fillStyle = "#2a662a"; // Darker Green base
-        ctx.fillRect(0, 0, textureSize, textureSize);
-
-        // Grass Blades (Noise)
-        for (let i = 0; i < 5000; i++) {
-            const x = Math.random() * textureSize;
-            const y = Math.random() * textureSize;
-            const w = 1 + Math.random() * 2;
-            const h = 3 + Math.random() * 5;
-
-            // Random variaion of lighter green
-            const green = Math.floor(100 + Math.random() * 100);
-            ctx.fillStyle = `rgb(50, ${green}, 50)`;
-            ctx.fillRect(x, y, w, h);
-        }
-
-        texture.update();
+        // Load seamless grass texture
+        const texture = new Texture("textures/grass.png", this._scene);
         texture.uScale = 4;
         texture.vScale = Ground.V_SCALE;
 
