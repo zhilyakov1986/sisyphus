@@ -1,4 +1,4 @@
-import { Mesh, MeshBuilder, Scene, StandardMaterial, Color3, Vector3 } from "babylonjs";
+import { Mesh, MeshBuilder, Scene, StandardMaterial, Color3 } from "babylonjs";
 
 export const ObstacleType = {
     WALL: 0,
@@ -10,13 +10,14 @@ export type ObstacleType = typeof ObstacleType[keyof typeof ObstacleType];
 export class Obstacle {
     public mesh: Mesh;
     public type: ObstacleType;
+    public active: boolean = true;
     private _scene: Scene;
 
     constructor(scene: Scene, type: ObstacleType, startZ: number, laneX: number) {
         this._scene = scene;
         this.type = type;
         this.mesh = this._createMesh(type);
-        this.mesh.position = new Vector3(laneX, 0, startZ);
+        this.reset(startZ, laneX);
     }
 
     private _createMesh(type: ObstacleType): Mesh {
@@ -36,10 +37,29 @@ export class Obstacle {
         }
 
         mesh.material = mat;
+        // Optimization: Freeze world matrix if static, but it moves, so maybe not?
+        // Actually, since we move it every frame, manual update might be better than auto.
         return mesh;
     }
 
+    public reset(startZ: number, laneX: number): void {
+        this.mesh.position.x = laneX;
+        this.mesh.position.z = startZ;
+        this.activate();
+    }
+
+    public activate(): void {
+        this.active = true;
+        this.mesh.setEnabled(true);
+    }
+
+    public deactivate(): void {
+        this.active = false;
+        this.mesh.setEnabled(false);
+    }
+
     public update(deltaTime: number, speed: number): void {
+        if (!this.active) return;
         this.mesh.position.z -= speed * deltaTime;
     }
 
