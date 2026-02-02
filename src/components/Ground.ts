@@ -14,7 +14,7 @@ export class Ground {
 
     public static readonly ITEM_HEIGHT = 100;
     public static readonly V_SCALE = 20;
-    public static readonly WORLD_SPEED = 15; // 15 units per second (Balanced)
+    public static readonly WORLD_SPEED = 20; // 20 units per second (Target speed)
 
     constructor(scene: Scene) {
         this._scene = scene;
