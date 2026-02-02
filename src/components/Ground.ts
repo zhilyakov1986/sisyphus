@@ -22,7 +22,7 @@ export class Ground {
     }
 
     private _createGround(): void {
-        const width = 20;
+        const width = 100;
         const height = Ground.ITEM_HEIGHT;
 
         this.mesh = MeshBuilder.CreateGround("ground", { width: width, height: height }, this._scene);
@@ -34,7 +34,7 @@ export class Ground {
 
         // Load seamless grass texture
         const texture = new Texture("textures/grass.png", this._scene);
-        texture.uScale = 4;
+        texture.uScale = 20;
         texture.vScale = Ground.V_SCALE;
 
         this._material.diffuseTexture = texture;

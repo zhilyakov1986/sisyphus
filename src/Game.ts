@@ -6,6 +6,7 @@ import { ObstacleManager } from "./systems/ObstacleManager";
 import { Boulder } from "./components/Boulder";
 import { ScoreManager } from "./systems/ScoreManager";
 import { UIManager } from "./systems/UIManager";
+import { SceneryManager } from "./systems/SceneryManager";
 import { Engine, TransformNode } from "babylonjs";
 
 const GameState = {
@@ -26,6 +27,7 @@ export class Game {
     private _boulder: Boulder;
     private _scoreManager: ScoreManager;
     private _uiManager: UIManager;
+    private _sceneryManager: SceneryManager;
     private _engine: Engine;
 
     // World Root for Slope
@@ -72,6 +74,7 @@ export class Game {
 
         // Obstacles (Pass worldRoot)
         this._obstacleManager = new ObstacleManager(this._sceneManager.scene, Ground.WORLD_SPEED, this._worldRoot);
+        this._sceneryManager = new SceneryManager(this._sceneManager.scene, Ground.WORLD_SPEED, this._worldRoot);
 
         // Initial UI State
         this._uiManager.showStartScreen();
@@ -160,6 +163,8 @@ export class Game {
         this._obstacleManager.update(deltaTime, this._player, () => {
             this._onObstacleHit();
         }, this._speedMultiplier);
+
+        this._sceneryManager.update(deltaTime, this._speedMultiplier);
 
         // Camera Shake Logic
         if (this._shakeIntensity > 0) {
